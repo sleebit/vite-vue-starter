@@ -1,5 +1,7 @@
-import { MotionPlugin } from "@vueuse/motion";
 import { createApp } from "vue";
+
+import { MotionPlugin } from "@vueuse/motion";
+import vue3GoogleLogin from "vue3-google-login";
 
 import "./assets/index.css";
 import router from "./router/index.js";
@@ -7,6 +9,11 @@ import store from "./store/index.js";
 import App from "./App.vue";
 
 const app = createApp(App);
+
+app.use(vue3GoogleLogin, {
+  clientId:
+    "648188226834-no9eddcthqh34420hvo3hc09vakt67au.apps.googleusercontent.com",
+});
 
 app.use(store).use(router).use(MotionPlugin);
 

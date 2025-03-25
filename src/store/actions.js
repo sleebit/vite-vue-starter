@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { BACKEND_URL, PAYMENTS_AUTH_URL } from "@/utils/constants";
+import { BACKEND_URL } from "@/utils/constants";
 
 export default {
   // Create an Agent

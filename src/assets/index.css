@@ -23,9 +23,9 @@
 
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 240 4.8% 95.9%;
+    --secondary: 173 58% 39%;
 
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 240 4.8% 95.9%;
 
@@ -92,9 +92,9 @@
 
     --primary-foreground: 240 5.9% 10%;
 
-    --secondary: 240 3.7% 15.9%;
+    --secondary: 173 58% 39%;
 
-    --secondary-foreground: 0 0% 98%;
+    --secondary-foreground: 240 5.9% 10%;
 
     --muted: 240 3.7% 15.9%;
 
@@ -122,8 +122,7 @@
 
     --chart-4: 280 65% 60%;
 
-    --chart-5: 340 75% 55%
-  ;
+    --chart-5: 340 75% 55%;
 
     --sidebar-background: 240 5.9% 10%;
 

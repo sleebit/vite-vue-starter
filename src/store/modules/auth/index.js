@@ -5,11 +5,12 @@ export default {
   namespaced: true,
   state: {
     user: null,
-    TOKENS: null,
-    TOASTER_DATA: null,
-    isLoading: false,
+    currentProject: null,
+    TOKENS:
+      localStorage.getItem("tokens") === null
+        ? null
+        : JSON.parse(localStorage.getItem("tokens")),
   },
-  getters: {},
-  mutations,
   actions,
+  mutations,
 };
