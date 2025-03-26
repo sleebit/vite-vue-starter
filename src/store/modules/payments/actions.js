@@ -105,18 +105,17 @@ export default {
         },
         { root: true }
       );
-      throw e;
     } finally {
       commit("SET_LOADING", false);
     }
   },
 
-  async verifyPayment({ commit }, { paymentId, orderId, signature }) {
+  async verifyPayment({ commit }, payload) {
     try {
       commit("SET_LOADING", true);
       const { data } = await paymentAxios.post(
         `${PAYMENTS_AUTH_URL}/payments/verify`,
-        { paymentId, orderId, signature }
+        payload
       );
       commit("SET_ORDER_STATUS", "success");
       commit(
@@ -142,7 +141,6 @@ export default {
         },
         { root: true }
       );
-      throw e;
     } finally {
       commit("SET_LOADING", false);
     }
@@ -152,7 +150,7 @@ export default {
     try {
       commit("SET_LOADING", true);
       const response = await paymentAxios.get(
-        `${PAYMENTS_AUTH_URL}/payments/subscription/status?includeHistory=true`
+        `${PAYMENTS_AUTH_URL}/payments/subscription/status`
       );
 
       if (response.data.status) {
@@ -185,7 +183,6 @@ export default {
         },
         { root: true }
       );
-      throw e;
     } finally {
       commit("SET_LOADING", false);
     }
@@ -211,7 +208,6 @@ export default {
         },
         { root: true }
       );
-      throw e;
     } finally {
       commit("SET_LOADING", false);
     }
@@ -245,7 +241,6 @@ export default {
         },
         { root: true }
       );
-      throw e;
     } finally {
       commit("SET_LOADING", false);
     }

@@ -7,7 +7,7 @@
           Global Settings
         </TabsTrigger>
         <TabsTrigger value="project" class="px-4 py-2 w-full">
-          Project Settings
+          App Settings
         </TabsTrigger>
       </TabsList>
 
@@ -254,9 +254,9 @@
         <!-- Project Settings (Dynamic Form) -->
         <Card class="mb-6">
           <CardHeader>
-            <CardTitle>Project Settings</CardTitle>
+            <CardTitle>App Settings</CardTitle>
             <CardDescription
-              >Customize the settings specific to this project.</CardDescription
+              >Customize the settings specific to this app.</CardDescription
             >
           </CardHeader>
           <CardContent>
@@ -280,7 +280,7 @@
               :loading="$store.state.isLoading"
               @click="saveProjectSettings"
             >
-              Save Project Settings
+              Save App Settings
             </Button>
           </CardContent>
         </Card>

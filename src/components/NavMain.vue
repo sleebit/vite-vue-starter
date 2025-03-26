@@ -7,13 +7,14 @@
           <SidebarMenuItem v-if="!item.items">
             <SidebarMenuButton
               as-child
+              class="cursor-pointer"
               :class="{
                 'text-secondary bg-secondary/10 hover:bg-secondary/20':
                   isRouteActive(item.url),
               }"
               @click="navigateToRoute(item.url)"
             >
-              <div class="flex w-full cursor-pointer">
+              <div class="flex w-full">
                 <component :is="item.icon" class="mr-2 h-4 w-4" />
                 <span>{{ item.title }}</span>
               </div>

@@ -33,7 +33,7 @@
           :user="{
             name: user.name || user.email,
             email: user.email,
-            image: user.image || 'https://github.com/shadcn.png',
+            image: user.image,
           }"
         />
       </SidebarFooter>
@@ -175,6 +175,68 @@ export default {
       default: "inset",
     },
   },
+  data() {
+    return {
+      projects: [
+        {
+          name: "Design Engineering",
+          url: "/projects/design-engineering",
+          icon: Frame,
+        },
+        {
+          name: "AI Research",
+          url: "/projects/ai-research",
+          icon: Bot,
+        },
+        {
+          name: "Analytics",
+          url: "/projects/analytics",
+          icon: PieChart,
+        },
+      ],
+      navMain: [
+        {
+          title: "Dashboard",
+          url: "/",
+          icon: SquareTerminal,
+          isActive: true,
+          // items: [
+          //   {
+          //     title: "History",
+          //     url: "/dashboard/history",
+          //   },
+          //   {
+          //     title: "Starred",
+          //     url: "/dashboard/starred",
+          //   },
+          //   {
+          //     title: "Settings",
+          //     url: "/dashboard/settings",
+          //   },
+          // ],
+        },
+        {
+          title: "Workflows",
+          url: "/workflows",
+          icon: Bot,
+          // items: [
+          //   {
+          //     title: "Genesis",
+          //     url: "/models/genesis",
+          //   },
+          //   {
+          //     title: "Explorer",
+          //     url: "/models/explorer",
+          //   },
+          //   {
+          //     title: "Quantum",
+          //     url: "/models/quantum",
+          //   },
+          // ],
+        },
+      ],
+    };
+  },
   computed: {
     ...mapState("auth", ["user", "currentProject"]),
     breadcrumbs() {
@@ -197,11 +259,6 @@ export default {
 
   beforeDestroy() {
     window.removeEventListener("resize", this.handleResize);
-  },
-  data() {
-    return {
-      windowWidth: window.innerWidth,
-    };
   },
 
   methods: {
@@ -276,68 +333,6 @@ export default {
         console.error(e);
       }
     },
-  },
-  data() {
-    return {
-      projects: [
-        {
-          name: "Design Engineering",
-          url: "/projects/design-engineering",
-          icon: Frame,
-        },
-        {
-          name: "AI Research",
-          url: "/projects/ai-research",
-          icon: Bot,
-        },
-        {
-          name: "Analytics",
-          url: "/projects/analytics",
-          icon: PieChart,
-        },
-      ],
-      navMain: [
-        {
-          title: "Dashboard",
-          url: "/",
-          icon: SquareTerminal,
-          isActive: true,
-          items: [
-            {
-              title: "History",
-              url: "/dashboard/history",
-            },
-            {
-              title: "Starred",
-              url: "/dashboard/starred",
-            },
-            {
-              title: "Settings",
-              url: "/dashboard/settings",
-            },
-          ],
-        },
-        {
-          title: "Models",
-          url: "/models",
-          icon: Bot,
-          items: [
-            {
-              title: "Genesis",
-              url: "/models/genesis",
-            },
-            {
-              title: "Explorer",
-              url: "/models/explorer",
-            },
-            {
-              title: "Quantum",
-              url: "/models/quantum",
-            },
-          ],
-        },
-      ],
-    };
   },
 };
 </script>

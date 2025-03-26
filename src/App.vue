@@ -15,7 +15,24 @@
       </router-view>
     </PageWrapper>
   </Sidebar>
-  
+
+  <!-- Layout without sidebar and top header -->
+  <template v-else-if="hideTopHeader">
+    <PageWrapper>
+      <router-view v-slot="{ Component }">
+        <transition
+          :name="transitionName"
+          mode="out-in"
+          @before-leave="beforeLeave"
+          @enter="enter"
+          @after-enter="afterEnter"
+        >
+          <component :is="Component" />
+        </transition>
+      </router-view>
+    </PageWrapper>
+  </template>
+
   <!-- Layout without sidebar -->
   <template v-else>
     <StandaloneBreadcrumb />
@@ -52,38 +69,6 @@ import PageWrapper from "@/components/layout/PageWrapper.vue";
 import { Toaster } from "@/components/ui/sonner";
 </script>
 
-<style>
-/* Route transition effects */
-.slide-left-enter-active,
-.slide-left-leave-active,
-.slide-right-enter-active,
-.slide-right-leave-active {
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.slide-left-enter-from {
-  opacity: 0;
-  transform: translateX(60px);
-}
-
-.slide-left-leave-to {
-  opacity: 0;
-  transform: translateX(-60px);
-}
-
-.slide-right-enter-from {
-  opacity: 0;
-  transform: translateX(-60px);
-}
-
-.slide-right-leave-to {
-  opacity: 0;
-  transform: translateX(60px);
-}
-</style>
-
 <script>
 import { mapState } from "vuex";
 import { toast } from "vue-sonner";
@@ -98,13 +83,14 @@ export default {
       // Routes that should NOT show the sidebar
       // All other routes will show the sidebar by default
       noSidebarRoutes: [
-        "/auth", 
-        "/auth/login", 
+        "/auth",
+        "/auth/login",
         "/auth/register",
-        "/profile", 
-        "/settings", 
-        "/pricing"
+        "/profile",
+        "/settings",
+        "/pricing",
       ],
+      noTopHeaderRoutes: ["/auth", "/auth/login", "/auth/register"],
     };
   },
   computed: {
@@ -116,6 +102,12 @@ export default {
     shouldShowSidebar() {
       const currentPath = this.$route.path;
       return !this.noSidebarRoutes.some((path) => currentPath.startsWith(path));
+    },
+    hideTopHeader() {
+      const currentPath = this.$route.path;
+      return this.noTopHeaderRoutes.some((path) =>
+        currentPath.startsWith(path)
+      );
     },
   },
   watch: {
@@ -195,3 +187,35 @@ export default {
   },
 };
 </script>
+
+<style>
+/* Route transition effects */
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.slide-left-enter-from {
+  opacity: 0;
+  transform: translateX(60px);
+}
+
+.slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(-60px);
+}
+
+.slide-right-enter-from {
+  opacity: 0;
+  transform: translateX(-60px);
+}
+
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateX(60px);
+}
+</style>

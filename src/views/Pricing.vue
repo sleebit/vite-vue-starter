@@ -143,7 +143,7 @@
             </div>
 
             <!-- Cancel button for active subscriptions -->
-            <Button
+            <!-- <Button
               v-if="canCancel"
               variant="outline"
               size="sm"
@@ -152,7 +152,7 @@
             >
               <XCircle class="h-4 w-4 mr-2" />
               Cancel Subscription
-            </Button>
+            </Button> -->
           </div>
         </div>
       </div>
@@ -228,11 +228,11 @@
             :variant="plan.popular ? 'default' : 'outline'"
             class="w-full mt-6"
             size="lg"
-            :disabled="isProcessing || isCurrentPlan(plan)"
+            :disabled="processingPlans[plan._id] || isCurrentPlan(plan)"
             @click="handlePurchase(plan)"
           >
             <Loader2
-              v-if="isProcessing && selectedPlan?.id === plan.id"
+              v-if="processingPlans[plan._id]"
               class="mr-2 h-4 w-4 animate-spin"
             />
             {{ getPlanButtonText(plan) }}
@@ -406,12 +406,12 @@
 
           <div class="space-y-2">
             <h3 class="text-lg font-semibold">
-              {{ lastSuccessfulPlan?.name }} Plan
+              {{ lastSuccessfulPlan?.name }}
             </h3>
             <p class="text-muted-foreground">
-              {{ lastSuccessfulPlan?.amount }}
-              {{ lastSuccessfulPlan?.currency }}/{{
-                lastSuccessfulPlan?.interval || "month"
+              {{ lastSuccessfulPlan?.pricing[0].amount }}
+              {{ lastSuccessfulPlan?.pricing[0].currency }}/{{
+                lastSuccessfulPlan?.pricing[0].interval || "month"
               }}
             </p>
           </div>
@@ -426,7 +426,7 @@
               class="flex items-center gap-2"
             >
               <CheckCircle2 class="h-3 w-3 text-green-600 flex-shrink-0" />
-              <span>{{ feature }}</span>
+              <span>{{ feature.name }}</span>
             </li>
           </ul>
         </div>
@@ -478,7 +478,7 @@ import { mapState } from "vuex";
 export default {
   data() {
     return {
-      isProcessing: false,
+      processingPlans: {}, // Track loading state per plan
       selectedPlan: null,
 
       showCancelDialog: false,
@@ -491,6 +491,7 @@ export default {
       refundReason: "",
       refundInProgress: false,
       lastSuccessfulPlan: null,
+      razorpayInstance: null,
     };
   },
   computed: {
@@ -630,13 +631,16 @@ export default {
     },
 
     getPlanButtonText(plan) {
-      if (this.isProcessing && this.selectedPlan?.id === plan.id) {
+      if (this.processingPlans[plan._id]) {
         return "Processing...";
       }
       if (this.isCurrentPlan(plan)) {
         return "Current Plan";
       }
-      return "Get Started";
+      if (plan.free) {
+        return "Get Started";
+      }
+      return "Subscribe";
     },
 
     scrollToPlans() {
@@ -655,31 +659,15 @@ export default {
     },
 
     async viewPaymentHistory() {
-      try {
-        await this.$store.dispatch("payments/getPaymentHistory");
-        this.$router.push("/payment-history");
-      } catch (error) {
-        this.$store.dispatch("auth/showNotification", {
-          type: "error",
-          message: "Failed to load payment history",
-        });
-      }
+      await this.$store.dispatch("payments/getPaymentHistory");
+      this.$router.push("/payment-history");
     },
 
-    handleRefundRequestClick() {
+    async handleRefundRequestClick() {
       // First load payment history if not already loaded
       if (!this.paymentHistory?.payments?.length) {
-        this.$store
-          .dispatch("payments/getPaymentHistory")
-          .then(() => {
-            this.showRefundDialog = true;
-          })
-          .catch(() => {
-            this.$store.dispatch("auth/showNotification", {
-              type: "error",
-              message: "Failed to load payments. Please try again.",
-            });
-          });
+        await this.$store.dispatch("payments/getPaymentHistory");
+        this.showRefundDialog = true;
       } else {
         this.showRefundDialog = true;
       }
@@ -750,11 +738,11 @@ export default {
         this.cancelReason = "";
         this.cancelComment = "";
       } catch (error) {
-        this.$store.dispatch("auth/showNotification", {
-          type: "error",
-          message:
-            error?.response?.data?.message || "Failed to cancel subscription",
-        });
+        // this.$store.dispatch("auth/showNotification", {
+        //   type: "error",
+        //   message:
+        //     error?.response?.data?.message || "Failed to cancel subscription",
+        // });
       } finally {
         this.cancelInProgress = false;
       }
@@ -767,11 +755,13 @@ export default {
 
     // Main purchase handler
     async handlePurchase(plan) {
+      // Check if user is logged in
       if (!this.user) {
         this.$router.push("/auth/login");
         return;
       }
 
+      // Check if already subscribed to this plan
       if (this.isCurrentPlan(plan)) {
         this.$store.dispatch("auth/showNotification", {
           type: "info",
@@ -780,31 +770,62 @@ export default {
         return;
       }
 
-      try {
-        this.isProcessing = true;
-        this.selectedPlan = plan;
+      // Set loading state for this specific plan
+      this.processingPlans = { ...this.processingPlans, [plan._id]: true };
+      this.selectedPlan = plan;
 
-        const payment = await this.$store.dispatch("payments/createPayment", {
+      try {
+        // Check if Razorpay is loaded
+        if (!window.Razorpay) {
+          throw new Error(
+            "Payment gateway not loaded. Please refresh the page."
+          );
+        }
+
+        // Create payment
+        const res = await this.$store.dispatch("payments/createPayment", {
           planId: plan._id,
           gateway: "razorpay", // or "stripe" based on configuration
         });
 
+        // Validate payment creation response
+        if (!res?.status || !res?.data?.payment) return;
+
+        const payment = res.data.payment;
         const projectName = this.currentProject?.name || "Sales AI";
 
-        // Initialize Razorpay
+        // Validate required payment data
+        if (
+          !payment.amount ||
+          !payment.currency ||
+          !payment?.gateway?.orderId
+        ) {
+          throw new Error("Invalid payment data received from server");
+        }
+
+        // Initialize Razorpay options
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: payment.amount,
           currency: payment.currency,
           name: projectName,
           description: `${plan.name} Plan - ${this.getPlanInterval(plan)}`,
-          order_id: payment.orderId,
+          order_id: payment.gateway.orderId,
           handler: async (response) => {
             try {
+              // Validate response
+              if (
+                !response.razorpay_payment_id ||
+                !response.razorpay_order_id ||
+                !response.razorpay_signature
+              ) {
+                throw new Error("Invalid payment response received");
+              }
+
+              // Verify payment
               await this.$store.dispatch("payments/verifyPayment", {
-                paymentId: response.razorpay_payment_id,
-                orderId: payment.orderId,
-                signature: response.razorpay_signature,
+                data: response,
+                paymentId: payment.paymentId,
               });
 
               // Get updated subscription status
@@ -813,67 +834,113 @@ export default {
               // Set last successful plan for the success dialog
               this.lastSuccessfulPlan = plan;
               this.showSuccessDialog = true;
-              this.isUpgradeMode = false;
 
               // Show success notification
               this.$store.dispatch("auth/showNotification", {
                 type: "success",
-                message: "Payment successful!",
+                message: "Payment successful! Your subscription is now active.",
               });
-
-              // We don't redirect immediately to allow user to see the success dialog
             } catch (e) {
               this.$store.dispatch("auth/showNotification", {
                 type: "error",
                 message:
-                  e?.response?.data?.message || "Payment verification failed",
+                  e?.response?.data?.message ||
+                  e.message ||
+                  "Payment verification failed",
               });
             } finally {
-              this.isProcessing = false;
+              // Clear loading state for this plan
+              this.processingPlans = {
+                ...this.processingPlans,
+                [plan._id]: false,
+              };
               this.selectedPlan = null;
+
+              // Cleanup Razorpay instance
+              if (this.razorpayInstance) {
+                this.razorpayInstance = null;
+              }
             }
           },
           modal: {
             ondismiss: () => {
-              this.isProcessing = false;
+              // Clear loading state when modal is dismissed
+              this.processingPlans = {
+                ...this.processingPlans,
+                [plan._id]: false,
+              };
               this.selectedPlan = null;
+
+              // Show info notification
+              this.$store.dispatch("auth/showNotification", {
+                type: "info",
+                message: "Payment cancelled",
+              });
             },
           },
           prefill: {
             name: this.user.name,
             email: this.user.email,
-            contact: this.user.phone,
+            contact: this.user.phone || "",
           },
           theme: {
             color: "hsl(var(--primary))",
           },
         };
 
-        const razorpay = new window.Razorpay(options);
-        razorpay.open();
+        // Create and open Razorpay instance
+        this.razorpayInstance = new window.Razorpay(options);
+        this.razorpayInstance.open();
       } catch (e) {
+        // Handle errors
         this.$store.dispatch("auth/showNotification", {
           type: "error",
-          message: e?.response?.data?.message || "Failed to create payment",
+          message:
+            e?.response?.data?.message ||
+            e.message ||
+            "Failed to create payment",
         });
-      } finally {
-        if (!window.Razorpay) {
-          this.isProcessing = false;
-          this.selectedPlan = null;
-        }
+
+        // Clear loading state for this plan
+        this.processingPlans = { ...this.processingPlans, [plan._id]: false };
+        this.selectedPlan = null;
       }
     },
   },
   async mounted() {
     try {
+      // Initialize empty processing plans object
+      this.processingPlans = {};
+
+      // Load subscription plans
       await this.$store.dispatch("payments/fetchPlans");
+
+      // If user is logged in, load subscription status
       if (this.user) {
         await this.$store.dispatch("payments/getPaymentHistory");
         await this.$store.dispatch("payments/getSubscriptionStatus");
       }
+
+      // Check if Razorpay script is already loaded
+      if (!window.Razorpay) {
+        // Load Razorpay script dynamically
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+        script.onerror = () => {
+          this.$store.dispatch("auth/showNotification", {
+            type: "error",
+            message: "Failed to load payment gateway. Please refresh the page.",
+          });
+        };
+        document.body.appendChild(script);
+      }
     } catch (error) {
-      // Error is already handled in the actions
       console.error("Error loading pricing data:", error);
+      this.$store.dispatch("auth/showNotification", {
+        type: "error",
+        message: "Failed to load subscription data. Please try again later.",
+      });
     }
   },
 };

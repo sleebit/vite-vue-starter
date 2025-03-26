@@ -3,21 +3,22 @@
     <SidebarGroupContent>
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton class="text-center mx-auto" @click="handleUpgrade">
+          <!-- <SidebarMenuButton class="text-center mx-auto" @click="handleUpgrade">
             Get Pro
-          </SidebarMenuButton>
-          <!-- <button
+          </SidebarMenuButton> -->
+          <button
             class="pricing-button flex justify-between items-center gap-2 w-full"
+            @click="handleUpgrade"
           >
-            <svg
+            <!-- <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 36 24"
               class="w-4 h-4 text-white"
             >
               <path d="m18 0 8 12 10-8-4 20H4L0 4l10 8 8-12z"></path>
-            </svg>
-            Get Pro 
-          </button> -->
+            </svg> -->
+            Subscribe Pro
+          </button>
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroupContent>
@@ -55,19 +56,27 @@ export default {
   gap: 1rem;
   padding: 12px 4px;
   width: 100%;
-  margin-bottom: 2rem;
-  color: #03e9f4;
+  color: #e3e3e3;
   text-transform: uppercase;
-  transition: 0.5s;
+  margin-bottom: 1.5rem;
   letter-spacing: 2px;
   font-weight: 600;
   overflow: hidden;
+  border-radius: 6px;
+  transition: all 0.5s ease-in-out;
 }
+.pricing-button {
+  background: #03e9f480;
+  color: #e3e3e3;
+  box-shadow: 0 0 0px #03e9f4, 0 0 4000px #03e9f4;
+  -webkit-box-reflect: below 2px linear-gradient(transparent, #0005);
+}
+
 .pricing-button:hover {
   background: #03e9f4;
-  color: #050801;
-  box-shadow: 0 0 5px #03e9f4, 0 0 4000px #03e9f4;
-  -webkit-box-reflect: below 1px linear-gradient(transparent, #0005);
+  color: #0d0d0d;
+  font-weight: 800;
+  -webkit-box-reflect: none;
 }
 .pricing-button span {
   position: absolute;
